@@ -102,3 +102,5 @@ template/config/
 .DS_Store
 
 /test-app/
+
+.tern-port
