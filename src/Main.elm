@@ -1,23 +1,14 @@
-module Main exposing (Model, Msg(..), init, main, update, view)
+module Main exposing (init, main, update, view)
 
 import Browser
-import Html exposing (Html, b, div, h1, img, text)
-import Html.Attributes exposing (src)
-import Html.Events exposing (onClick)
+import Html exposing (Html)
+import Model exposing (Color(..), Model, Msg(..), NetworkStatus(..))
 import Ports
-import Svg exposing (Svg)
-import Svg.Attributes
+import View
 
 
 
 ---- MODEL ----
-
-
-type alias Model =
-    { circleColor : Color
-    , numberOfTimes : Int
-    , networkStatus : Maybe NetworkStatus
-    }
 
 
 init : Maybe Int -> ( Model, Cmd Msg )
@@ -34,24 +25,8 @@ init startingVal =
     )
 
 
-type Color
-    = Black
-    | Red
-
-
 
 ---- UPDATE ----
-
-
-type Msg
-    = NoOp
-    | ClickedCircle
-    | NetworkMessage String
-
-
-type NetworkStatus
-    = Online
-    | Offline
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -88,8 +63,7 @@ update msg model =
         NetworkMessage s ->
             case s of
                 "online" ->
-                    Debug.log "!"
-                        ( { model | networkStatus = Just Online }, Cmd.none )
+                    ( { model | networkStatus = Just Online }, Cmd.none )
 
                 "offline" ->
                     ( { model | networkStatus = Just Offline }, Cmd.none )
@@ -107,52 +81,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    let
-        networkString =
-            case model.networkStatus of
-                Just Online ->
-                    "online"
-
-                Just Offline ->
-                    "offline"
-
-                Nothing ->
-                    "dont know yet"
-    in
-    div []
-        [ h1 [] [ text "Habit Tracker" ]
-        , Svg.svg
-            [ Svg.Attributes.width "100"
-            , Svg.Attributes.height "100"
-            , Svg.Attributes.viewBox "0 0 100 100"
-            ]
-            [ circle model.circleColor ]
-        , div []
-            [ b [] [ text <| "Antall ganger " ++ String.fromInt model.numberOfTimes ] ]
-        , div []
-            [ text <| networkString ]
-        ]
-
-
-circle : Color -> Svg Msg
-circle color =
-    let
-        c =
-            case color of
-                Black ->
-                    "black"
-
-                Red ->
-                    "red"
-    in
-    Svg.circle
-        [ Svg.Attributes.cx "50"
-        , Svg.Attributes.cy "50"
-        , Svg.Attributes.r "40"
-        , Svg.Attributes.fill c
-        , onClick ClickedCircle
-        ]
-        []
+    View.mainView model
 
 
 
