@@ -1,8 +1,9 @@
 module Main exposing (init, main, update, view)
 
 import Browser
+import Dict exposing (Dict)
 import Html exposing (Html)
-import Model exposing (Color(..), Model, Msg(..), NetworkStatus(..))
+import Model exposing (Color(..), Counter, Model, Msg(..), NetworkStatus(..))
 import Ports
 import View
 
@@ -11,15 +12,35 @@ import View
 ---- MODEL ----
 
 
-init : Maybe Int -> ( Model, Cmd Msg )
-init startingVal =
+type alias Flags =
+    { startingValue : Maybe Int
+    , counters : List Counter
+    , isOnline : Bool
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     let
         val =
-            Maybe.withDefault 0 startingVal
+            flags.startingValue
+                |> Maybe.withDefault 0
+
+        networkStatus =
+            if flags.isOnline then
+                Online
+
+            else
+                Offline
+
+        initDict =
+            flags.counters
+                |> List.map (\c -> ( c.id, c ))
+                |> Dict.fromList
     in
     ( { circleColor = Black
-      , numberOfTimes = val
-      , networkStatus = Nothing
+      , counters = Just initDict
+      , networkStatus = networkStatus
       }
     , Cmd.none
     )
@@ -32,44 +53,67 @@ init startingVal =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ClickedCircle ->
-            let
-                currentColor =
-                    model.circleColor
+        ClickedCircle id ->
+            case model.counters of
+                Nothing ->
+                    ( model, Cmd.none )
 
-                nuTimes =
-                    model.numberOfTimes + 1
+                Just dict ->
+                    let
+                        currentColor =
+                            model.circleColor
 
-                cmd =
-                    Ports.saveValue <| String.fromInt nuTimes
-            in
-            case currentColor of
-                Black ->
-                    ( { model
-                        | circleColor = Red
-                        , numberOfTimes = nuTimes
-                      }
-                    , Cmd.batch [ cmd ]
-                    )
+                        nuTimes =
+                            Dict.get
+                                id
+                                dict
+                                |> Maybe.map .numberOfTimes
+                                |> Maybe.map (\i -> i + 1)
+                                |> Maybe.withDefault 0
 
-                Red ->
-                    ( { model
-                        | circleColor = Black
-                        , numberOfTimes = nuTimes
-                      }
-                    , Cmd.batch [ cmd ]
-                    )
+                        updatedDictionary =
+                            Dict.update
+                                id
+                                (Maybe.map
+                                    (\v -> { v | numberOfTimes = nuTimes })
+                                )
+                                dict
+
+                        cmd =
+                            Dict.get id updatedDictionary
+                                |> Maybe.map Ports.saveValue
+                                |> Maybe.withDefault Cmd.none
+                    in
+                    case currentColor of
+                        Black ->
+                            ( { model
+                                | circleColor = Red
+                                , counters = Just updatedDictionary
+                              }
+                            , Cmd.batch [ cmd ]
+                            )
+
+                        Red ->
+                            ( { model
+                                | circleColor = Black
+                                , counters = Just updatedDictionary
+                              }
+                            , Cmd.batch [ cmd ]
+                            )
+
+        ClickedPlus ->
+            ( model, Cmd.none )
 
         NetworkMessage s ->
             case s of
                 "online" ->
-                    ( { model | networkStatus = Just Online }, Cmd.none )
+                    ( { model | networkStatus = Online }, Cmd.none )
 
                 "offline" ->
-                    ( { model | networkStatus = Just Offline }, Cmd.none )
+                    ( { model | networkStatus = Offline }, Cmd.none )
 
                 _ ->
-                    ( { model | networkStatus = Nothing }, Cmd.none )
+                    ( model, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -88,7 +132,7 @@ view model =
 ---- PROGRAM ----
 
 
-main : Program (Maybe Int) Model Msg
+main : Program Flags Model Msg
 main =
     Browser.element
         { view = view

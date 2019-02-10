@@ -1,10 +1,19 @@
-module Model exposing (Color(..), Model, Msg(..), NetworkStatus(..), networkStatusAsString)
+module Model exposing (Color(..), Counter, Model, Msg(..), NetworkStatus(..), networkStatusAsString)
+
+import Dict exposing (Dict)
 
 
 type alias Model =
     { circleColor : Color
+    , counters : Maybe (Dict Int Counter)
+    , networkStatus : NetworkStatus
+    }
+
+
+type alias Counter =
+    { name : String
     , numberOfTimes : Int
-    , networkStatus : Maybe NetworkStatus
+    , id : Int
     }
 
 
@@ -18,20 +27,18 @@ type NetworkStatus
     | Offline
 
 
-networkStatusAsString : Maybe NetworkStatus -> String
+networkStatusAsString : NetworkStatus -> String
 networkStatusAsString networkStatus =
     case networkStatus of
-        Just Online ->
+        Online ->
             "online"
 
-        Just Offline ->
+        Offline ->
             "offline"
-
-        Nothing ->
-            "dont know yet"
 
 
 type Msg
     = NoOp
-    | ClickedCircle
+    | ClickedCircle Int
+    | ClickedPlus
     | NetworkMessage String
