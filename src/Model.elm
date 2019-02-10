@@ -5,8 +5,9 @@ import Dict exposing (Dict)
 
 type alias Model =
     { circleColor : Color
-    , counters : Maybe (Dict Int Counter)
+    , counters : Dict Int Counter
     , networkStatus : NetworkStatus
+    , nameOfNewCounter : Maybe String
     }
 
 
@@ -42,3 +43,5 @@ type Msg
     | ClickedCircle Int
     | ClickedPlus
     | NetworkMessage String
+    | NewCounterMessage String
+    | SubmitNewCounter

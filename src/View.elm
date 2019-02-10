@@ -5,6 +5,7 @@ import Element exposing (Element, alignBottom, alignRight, centerX, column, el, 
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Element.Input as Input
 import Element.Region as Region
 import Hex
 import Html exposing (Html)
@@ -62,26 +63,30 @@ page model =
         ]
         [ header
         , content model
+        , newCounterInput
         , footer model
         ]
 
 
 content : Model -> Element Msg
 content model =
-    case model.counters of
-        Nothing ->
-            noCounterMessage
+    let
+        counters =
+            List.map showCounter <|
+                Dict.values model.counters
 
-        Just dict ->
-            let
-                counters =
-                    List.map showCounter <|
-                        Dict.values dict
-            in
-            column
-                [ width fill
-                ]
-                counters
+        cont =
+            case counters of
+                [] ->
+                    [ noCounterMessage ]
+
+                _ ->
+                    counters
+    in
+    column
+        [ width fill
+        ]
+        cont
 
 
 showCounter : Counter -> Element Msg
@@ -97,9 +102,33 @@ showCounter counter =
 
 noCounterMessage : Element Msg
 noCounterMessage =
-    el [] <|
+    el
+        [ centerX
+        , padding 20
+        ]
+    <|
         text
             "No counters yet."
+
+
+newCounterInput : Element Msg
+newCounterInput =
+    el
+        [ alignBottom
+        ]
+    <|
+        row []
+            [ Input.text []
+                { onChange = NewCounterMessage
+                , text = ""
+                , placeholder = Nothing
+                , label = Input.labelAbove [] <| text "NAVN"
+                }
+            , Input.button []
+                { onPress = Just SubmitNewCounter
+                , label = text "Submit"
+                }
+            ]
 
 
 footer : Model -> Element Msg

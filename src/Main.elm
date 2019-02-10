@@ -39,8 +39,9 @@ init flags =
                 |> Dict.fromList
     in
     ( { circleColor = Black
-      , counters = Just initDict
+      , counters = initDict
       , networkStatus = networkStatus
+      , nameOfNewCounter = Nothing
       }
     , Cmd.none
     )
@@ -54,52 +55,47 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ClickedCircle id ->
-            case model.counters of
-                Nothing ->
-                    ( model, Cmd.none )
+            let
+                currentColor =
+                    model.circleColor
 
-                Just dict ->
-                    let
-                        currentColor =
-                            model.circleColor
+                nuTimes =
+                    Dict.get
+                        id
+                        model.counters
+                        |> Maybe.map .numberOfTimes
+                        |> Maybe.map (\i -> i + 1)
+                        |> Maybe.withDefault 0
 
-                        nuTimes =
-                            Dict.get
-                                id
-                                dict
-                                |> Maybe.map .numberOfTimes
-                                |> Maybe.map (\i -> i + 1)
-                                |> Maybe.withDefault 0
+                updatedDictionary =
+                    Dict.update
+                        id
+                        (Maybe.map
+                            (\v -> { v | numberOfTimes = nuTimes })
+                        )
+                        model.counters
 
-                        updatedDictionary =
-                            Dict.update
-                                id
-                                (Maybe.map
-                                    (\v -> { v | numberOfTimes = nuTimes })
-                                )
-                                dict
+                cmd =
+                    Dict.get id updatedDictionary
+                        |> Maybe.map Ports.saveValue
+                        |> Maybe.withDefault Cmd.none
+            in
+            case currentColor of
+                Black ->
+                    ( { model
+                        | circleColor = Red
+                        , counters = updatedDictionary
+                      }
+                    , Cmd.batch [ cmd ]
+                    )
 
-                        cmd =
-                            Dict.get id updatedDictionary
-                                |> Maybe.map Ports.saveValue
-                                |> Maybe.withDefault Cmd.none
-                    in
-                    case currentColor of
-                        Black ->
-                            ( { model
-                                | circleColor = Red
-                                , counters = Just updatedDictionary
-                              }
-                            , Cmd.batch [ cmd ]
-                            )
-
-                        Red ->
-                            ( { model
-                                | circleColor = Black
-                                , counters = Just updatedDictionary
-                              }
-                            , Cmd.batch [ cmd ]
-                            )
+                Red ->
+                    ( { model
+                        | circleColor = Black
+                        , counters = updatedDictionary
+                      }
+                    , Cmd.batch [ cmd ]
+                    )
 
         ClickedPlus ->
             ( model, Cmd.none )
@@ -115,8 +111,36 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        NewCounterMessage name ->
+            ( { model | nameOfNewCounter = Just name }, Cmd.none )
+
+        SubmitNewCounter ->
+            let
+                newKey =
+                    nextKey model.counters
+
+                updatedDictionary =
+                    Dict.insert newKey
+                        { name = Maybe.withDefault "no-name" model.nameOfNewCounter
+                        , numberOfTimes = 0
+                        , id = newKey
+                        }
+                        model.counters
+            in
+            ( { model | counters = updatedDictionary }, Cmd.none )
+
         NoOp ->
             ( model, Cmd.none )
+
+
+nextKey : Dict Int Counter -> Int
+nextKey dict =
+    dict
+        |> Dict.keys
+        |> List.sort
+        |> List.head
+        |> Maybe.map (\i -> i + 1)
+        |> Maybe.withDefault 0
 
 
 
