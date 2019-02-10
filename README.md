@@ -1,3 +1,15 @@
+# Habit Tracker
+
+Written in Elm.
+
+Try it [here.](https://fredrikmeyer.github.io/habit/).
+
+Uses localstorage to store habits on your device.
+
+
+
+
+------
 # Elm App
 
 This project is bootstrapped with [Create Elm App](https://github.com/halfzebra/create-elm-app).

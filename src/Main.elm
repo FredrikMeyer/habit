@@ -126,6 +126,11 @@ update msg model =
                         , id = newKey
                         }
                         model.counters
+
+                cmd =
+                    Dict.get newKey updatedDictionary
+                        |> Maybe.map Ports.saveValue
+                        |> Maybe.withDefault Cmd.none
             in
             ( { model | counters = updatedDictionary }, Cmd.none )
 
