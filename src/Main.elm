@@ -142,7 +142,7 @@ nextKey : Dict Int Counter -> Int
 nextKey dict =
     dict
         |> Dict.keys
-        |> List.sort
+        |> List.sortBy (\x -> -x)
         |> List.head
         |> Maybe.map (\i -> i + 1)
         |> Maybe.withDefault 0

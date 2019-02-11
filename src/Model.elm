@@ -11,6 +11,12 @@ type alias Model =
     }
 
 
+
+-- TODO: counters should be
+-- a datastructure containing the dict.
+-- With a counter with current-id to avoid the awkward nextKey function
+
+
 type alias Counter =
     { name : String
     , numberOfTimes : Int
